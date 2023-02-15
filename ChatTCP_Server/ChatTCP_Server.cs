@@ -12,7 +12,6 @@ namespace ChatTCP
 { 
     class ChatTCP_Server
     {
-        // Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         TcpListener tcpHandler = new TcpListener(IPAddress.Parse("127.0.0.1"), 8888);
 
         List<ClientEntity> connectedClients = new List<ClientEntity>();
@@ -22,8 +21,6 @@ namespace ChatTCP
 
         internal void StartServer()
         {
-            //socket.Bind(_ipPoint);
-            //socket.Listen(4096);
             Console.WriteLine("Server Started at: " + IPAddress.Parse("127.0.0.1"));
         }
 
@@ -89,6 +86,11 @@ namespace ChatTCP
                 if (_client._ID != _id) // если id клиента не равно id отправителя
                 {
                     await _client._streamWriter.WriteLineAsync(message);
+                    await _client._streamWriter.FlushAsync();
+                }
+                else
+                {
+                    await _client._streamWriter.WriteLineAsync("(You) " + message);
                     await _client._streamWriter.FlushAsync();
                 }
             }

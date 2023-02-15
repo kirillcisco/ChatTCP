@@ -118,6 +118,8 @@ namespace ChatTCP
         {
             await writer.WriteLineAsync(localClient.Username());
             await writer.FlushAsync();
+            await writer.WriteLineAsync(localClient.Userbio());
+            await writer.FlushAsync();
             Console.WriteLine("Enter your message and press enter");
 
             while (true)
@@ -125,6 +127,10 @@ namespace ChatTCP
                 string? message = Console.ReadLine();
                 await writer.WriteLineAsync(message);
                 await writer.FlushAsync();
+
+                // clear output line with msg to tag you msg by server (msg -> You: msg)
+                Console.SetCursorPosition(0, Console.CursorTop - 1);
+                ClearOutputLine();
             }
         }
 
@@ -169,6 +175,14 @@ namespace ChatTCP
                 // и пользователь продолжает ввод уже на следующей строке
                 Console.SetCursorPosition(left, top + 1);
             }
+        }
+
+        public static void ClearOutputLine()
+        {
+            int currentLineCursor = Console.CursorTop;
+            Console.SetCursorPosition(0, Console.CursorTop);
+            Console.Write(new string(' ', Console.WindowWidth));
+            Console.SetCursorPosition(0, currentLineCursor);
         }
     }
 
