@@ -3,6 +3,8 @@ using System.Net.Sockets;
 using System;
 using ChatTCP;
 using System.Security.Cryptography;
+using System.IO;
+using System.Collections.Generic;
 
 ChatTCP_Server ChatServer = new ChatTCP_Server();
 ChatServer.StartServer();
@@ -79,20 +81,37 @@ namespace ChatTCP
             BroadcastMessage($"{client._username} leaves the chat", client._ID);
         }
 
-        internal async Task BroadcastMessage(string message, int _id)
+        internal async Task BroadcastMessage(string _message, int _id)
         {
             foreach (var _client in connectedClients)
             {
                 if (_client._ID != _id) // если id клиента не равно id отправителя
                 {
-                    await _client._streamWriter.WriteLineAsync(message);
+                    await _client._streamWriter.WriteLineAsync(_message);
                     await _client._streamWriter.FlushAsync();
                 }
                 else
                 {
-                    await _client._streamWriter.WriteLineAsync("(You) " + message);
+                    await _client._streamWriter.WriteLineAsync("(You) " + _message);
                     await _client._streamWriter.FlushAsync();
                 }
+            }
+        }
+
+        internal async Task PersonalMessage(string _message, string _username, int _id)
+        {
+            ClientEntity _destionation_client = connectedClients.Find(x => x._username == _username);
+            ClientEntity _source_client = connectedClients.Find(x => x._ID == _id);
+
+            try
+            {
+                await _destionation_client._streamWriter.WriteAsync("(From " + _source_client._username + "):" + _message);
+                await _destionation_client._streamWriter.FlushAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
             }
         }
     }
