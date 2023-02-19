@@ -1,4 +1,6 @@
 ﻿using ChatTCP;
+using System.Collections.Generic;
+using System;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
@@ -13,6 +15,8 @@ namespace ChatTCP
         protected internal string _userbio { get; set; }
         protected internal StreamWriter _streamWriter { get; }
         protected internal StreamReader _streamReader { get; }
+
+        internal ChatCommand chatCommand;
 
         TcpClient _client;
         ChatTCP_Server _server; // объект сервера
@@ -78,7 +82,32 @@ namespace ChatTCP
                             {
                                 // debug rightnow
                                 Console.WriteLine("command find: " + _message);
-                                await CommandProcessor(_server,_message);
+                                string[] _opers = Regex.Split(_message, @"(?<!\s)\s|\s(?!\s)");
+                                string[] _opersWithoutCommand = _opers.Skip(1).ToArray();
+                                string _msgWithoutCommand = string.Join(" ", _opersWithoutCommand);
+
+                                switch (_opers[0])
+                                {
+                                    case "/exit":
+                                        chatCommand.DisconnectByClient(_ID);
+                                        break;
+                                    case "/pm":
+
+                                        break;
+                                    case "/bio":
+                                        break;
+                                    case "/whoami":
+                                        break;
+                                    case "/roll":
+                                        break;
+                                    case "/me":
+                                        break;
+                                    default:
+                                        Console.WriteLine("Invalid command");
+                                        break;
+                                }
+
+                                //await CommandProcessor(_server,_message);
                                 return;
                             }
                         }
@@ -126,101 +155,14 @@ namespace ChatTCP
 
         internal static async Task CommandProcessor(ChatTCP_Server _srv, string _msg)
         {
-            string[] _oper = Regex.Split(_msg, @"(?<!\s)\s|\s(?!\s)");
+            
 
             /* foreach (var operand in operands)
             {
                 Console.WriteLine(operand);
             } */
 
-            switch (_oper[0])
-            {
-                case "/exit":
-                    var _chatCommand = new DisconnectByClient( _ID => { _srv.ClientDiscconnect(_ID);});
-                    _chatCommand.Execute();
-                    break;
-                default:
-                    Console.WriteLine("Invalid command");
-                    break;
-            }
-        }
-    }
-
-    // Commands with /....
-
-    internal class ShowBio : IChatCommand
-    {
-        public ShowBio()
-        {
-        }
-
-        public bool Executable()
-        {
-            return true;
-        }
-        public void Execute()
-        {
-
-        }
-    }
-
-    internal class PersonalMessage : IChatCommand
-    {
-        private Action<object> execute;
-        private Func<object, bool> executable;
-
-        public PersonalMessage(Action<object> execute, Func<object, bool> executable = null)
-        {
-            this.execute = execute;
-            this.executable = executable;
-        }
-
-        public bool Executable()
-        {
-            return true;
-        }
-        public void Execute()
-        {
-
-        }
-    }
-
-    internal class DisconnectByClient : IChatCommand
-    {
-        private Action<int> execute;
-
-        public DisconnectByClient(Action<int> execute)
-        {
-            this.execute = execute;
-        }
-
-        public bool Executable()
-        {
-            return true;
-        }
-        public void Execute()
-        {
-        }
-    }
-
-    internal class RollingNumber : IChatCommand
-    {
-        private Action<object> execute;
-        private Func<object, bool> executable;
-
-        public RollingNumber(Action<object> execute, Func<object, bool> executable = null)
-        {
-            this.execute = execute;
-            this.executable = executable;
-        }
-
-        public bool Executable()
-        {
-            return true;
-        }
-        public void Execute()
-        {
-
+            
         }
     }
 }

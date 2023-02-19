@@ -68,6 +68,11 @@ namespace ChatTCP
             }
         }
 
+        internal bool CheckForConnection(int _id)
+        {
+            return true;
+        }
+
         internal void ClientDiscconnect(int _id)
         {
             // получаем по id закрытое подключение
