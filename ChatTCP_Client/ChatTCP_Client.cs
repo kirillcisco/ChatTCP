@@ -25,11 +25,7 @@ namespace ChatTCP
 
         ConsoleKeyInfo keyinfo;
 
-        TcpClient tcpHandler = new TcpClient();
         int port = 8888;
-
-        StreamReader? Reader = null;
-        StreamWriter? Writer = null;
 
         internal void StartClient()
         {
@@ -38,6 +34,10 @@ namespace ChatTCP
 
         internal async void ConnectByIP(string _ip)
         {
+            TcpClient tcpHandler = new TcpClient();
+            StreamReader? Reader = null;
+            StreamWriter? Writer = null;
+
             try
             {
                 tcpHandler.Connect(_ip, port);
@@ -52,6 +52,13 @@ namespace ChatTCP
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+            }
+            finally 
+            {
+                Console.WriteLine("Connection closed");
+                Reader.Close();
+                Writer.Close();
+                tcpHandler.Close(); 
             }
         }
 
@@ -136,12 +143,14 @@ namespace ChatTCP
 
         async Task ReceiveMessageAsync(StreamReader reader)
         {
+
             while (true)
             {
                 try
                 {
                     // check the null or empty incoming msg
                     string? message = await reader.ReadLineAsync();
+                    
                     if (string.IsNullOrEmpty(message)) continue;
                     Print(message);
                 }

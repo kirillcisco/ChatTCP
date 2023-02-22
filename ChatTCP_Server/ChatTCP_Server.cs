@@ -12,7 +12,7 @@ await ChatServer.ConnectionHandler();
 
 namespace ChatTCP
 { 
-    class ChatTCP_Server
+    public class ChatTCP_Server
     {
         TcpListener tcpHandler = new TcpListener(IPAddress.Parse("127.0.0.1"), 8888);
 
@@ -77,13 +77,19 @@ namespace ChatTCP
         {
             // получаем по id закрытое подключение
             ClientEntity? client = connectedClients.FirstOrDefault(_client => _client._ID == _id);
+            if (client == null) 
+            {
+                Console.WriteLine("User not found");
+                return;
+            }
+
+            Console.WriteLine("User " + client._ID + " disconnected");
+            // BroadcastMessage($"{client._username} leaves the chat", client._ID);
 
             // и удаляем его из списка подключений
             if (client != null) connectedClients.Remove(client);
             client?.CloseConnectionByServer();
-
-            Console.WriteLine("User " + client._ID + " disconnected");
-            BroadcastMessage($"{client._username} leaves the chat", client._ID);
+            
         }
 
         internal async Task BroadcastMessage(string _message, int _id)
@@ -103,10 +109,10 @@ namespace ChatTCP
             }
         }
 
-        internal async Task PersonalMessage(string _message, string _username, int _id)
+        internal async Task PersonalMessage(string _message, string _username, int _userID)
         {
-            ClientEntity _destionation_client = connectedClients.Find(x => x._username == _username);
-            ClientEntity _source_client = connectedClients.Find(x => x._ID == _id);
+            var _destionation_client = connectedClients.Find(x => x._username == _username);
+            var _source_client = connectedClients.Find(x => x._ID == _userID);
 
             try
             {
@@ -119,12 +125,20 @@ namespace ChatTCP
                 throw;
             }
         }
+
+        internal async Task ServerPersonalMessage(string _message, int _userID)
+        {
+            var _client = connectedClients.Find(x => x._ID == _userID);
+
+                try
+                {
+                    await _client._streamWriter.WriteAsync("(Server): " + _message);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    throw;
+                }
+        }
     }
 }
-
-
-
-
-
-
-

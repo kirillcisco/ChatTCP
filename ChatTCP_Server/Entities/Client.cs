@@ -16,10 +16,8 @@ namespace ChatTCP
         protected internal StreamWriter _streamWriter { get; }
         protected internal StreamReader _streamReader { get; }
 
-        internal ChatCommand chatCommand;
-
         TcpClient _client;
-        ChatTCP_Server _server; // объект сервера
+        ChatTCP_Server _server;
 
         internal ClientEntity(TcpClient tcpClient, ChatTCP_Server _connectedTCPServer, int _userChatID)
         {
@@ -55,14 +53,18 @@ namespace ChatTCP
                     throw;
                 }
 
+                if (string.IsNullOrEmpty(_username))
+                {
+                    _username = "Unknown_" + _ID;
+                }
+                if (string.IsNullOrEmpty(_userbio))
+                {
+                    _userbio = "We don't know anything about " + _username;
+                }
+
                 // log connecting
                 var _timeStamp = new DateTimeOffset(DateTime.UtcNow);
                 Console.WriteLine($"User: ID: {_ID}, Nickname: {_username}, bio: {_userbio} [CONNECTED] [{_timeStamp}]");
-
-                if (string.IsNullOrEmpty(_username))
-                {
-                    _username = "Unknown";
-                }
 
                 while (true)
                 {
@@ -80,38 +82,15 @@ namespace ChatTCP
                             } */
                             if (Regex.IsMatch(_message, @"(/+)"))
                             {
-                                // debug rightnow
-                                
-                                Console.WriteLine("command find: " + _message);
-                                string[] _opers = Regex.Split(_message, @"(?<!\s)\s|\s(?!\s)");
-                                string[] _opersWithoutCommand = _opers.Skip(1).ToArray();
-                                string _msgWithoutCommand = string.Join(" ", _opersWithoutCommand);
+                                string[] _args = Regex.Split(_message, @"(?<!\s)\s|\s(?!\s)");
+                                string[] _argsWithoutCommand = _args.Skip(1).ToArray();
+                                string _msgWithoutCommand = string.Join(" ", _argsWithoutCommand);
 
-                                switch (_opers[0])
-                                {
-                                    case "/exit":
-                                        chatCommand.DisconnectByClient(_ID);
-                                        break;
-                                    case "/pm":
-                                        break;
-                                    case "/bio":
-                                        break;
-                                    case "/whoami":
-                                        break;
-                                    case "/roll":
-                                        break;
-                                    case "/me":
-                                        break;
-                                    default:
-                                        Console.WriteLine("Invalid command");
-                                        break;
-                                }
-
-                                //await CommandProcessor(_server,_message);
-                                return;
+                                ChatCommand chatCommand = new ChatCommand(_args, _argsWithoutCommand, _msgWithoutCommand, _ID, _server);
+                                continue;
                             }
                         }
-                        else return;
+                        else continue;
 
                         _message = $"{_username}: {_message}";
                         Console.WriteLine(_message);
@@ -131,7 +110,8 @@ namespace ChatTCP
             }
             finally
             {
-                _server.ClientDiscconnect(_ID);
+                Console.WriteLine("Client processor is closed, user ID: " + _ID);
+                // _server.ClientDiscconnect(_ID);
             }
 
         }
@@ -142,27 +122,10 @@ namespace ChatTCP
             _streamWriter.Close();
             _client.Close();
         }
-        
-        // todo ?
-        /* internal static bool CheckCommand(string _msg)
+
+        internal void DisplayLocalError(string _errorMsg)
         {
-            string[] msg = _msg.Split()
-                    .Where(x => x.StartsWith("/"))
-                    .Distinct()
-                    .ToArray();
-            return msg.Length > 0;
-        } */
-
-        internal static async Task CommandProcessor(ChatTCP_Server _srv, string _msg)
-        {
-            
-
-            /* foreach (var operand in operands)
-            {
-                Console.WriteLine(operand);
-            } */
-
-            
+            Console.WriteLine("Error: " + _errorMsg);
         }
     }
 }
