@@ -18,7 +18,7 @@ namespace ChatTCP
 
         List<ClientEntity> connectedClients = new List<ClientEntity>();
 
-        // IDBase[ID] = nickname
+        // IDBase[ID] = nickname, Unknown_RANDOMINDEX TODO
         List<string> IDBase = new List<string>();
 
         internal void StartServer()

@@ -81,6 +81,7 @@ namespace ChatTCP
                             if (Regex.IsMatch(_message, @"(/+)"))
                             {
                                 // debug rightnow
+                                
                                 Console.WriteLine("command find: " + _message);
                                 string[] _opers = Regex.Split(_message, @"(?<!\s)\s|\s(?!\s)");
                                 string[] _opersWithoutCommand = _opers.Skip(1).ToArray();
@@ -92,7 +93,6 @@ namespace ChatTCP
                                         chatCommand.DisconnectByClient(_ID);
                                         break;
                                     case "/pm":
-
                                         break;
                                     case "/bio":
                                         break;

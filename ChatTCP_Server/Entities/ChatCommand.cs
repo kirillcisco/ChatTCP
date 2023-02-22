@@ -11,7 +11,7 @@ namespace ChatTCP
     {
         public void DisconnectByClient(int _id)
         {
-
         }
     }
+
 }
