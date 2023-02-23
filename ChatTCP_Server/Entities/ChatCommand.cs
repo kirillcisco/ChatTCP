@@ -39,8 +39,6 @@ namespace ChatTCP
                     break;
             }
 
-
-
             // todo ?
             /* internal static bool CheckCommand(string _msg)
             {

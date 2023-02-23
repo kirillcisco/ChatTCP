@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace ChatTCP
 {
+    // depricated now, target to delete
     internal interface IChatCommand
     {
         bool Executable();

@@ -8,14 +8,13 @@ using System.Collections.Generic;
 
 ChatTCP_Server ChatServer = new ChatTCP_Server();
 ChatServer.StartServer();
-await ChatServer.ConnectionHandler();
 
 namespace ChatTCP
 { 
     public class ChatTCP_Server
     {
-        TcpListener tcpHandler = new TcpListener(IPAddress.Parse("127.0.0.1"), 8888);
-
+        IPEndPoint ipEndPoint;
+        TcpListener tcpHandler;
         List<ClientEntity> connectedClients = new List<ClientEntity>();
 
         // IDBase[ID] = nickname, Unknown_RANDOMINDEX TODO
@@ -23,16 +22,50 @@ namespace ChatTCP
 
         internal void StartServer()
         {
-            Console.WriteLine("Server Started at: " + IPAddress.Parse("127.0.0.1"));
+            try
+            {
+                ipEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8888);
+                Console.WriteLine("Server starting at " + ipEndPoint);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Fault to allocate ipEndPoint: " + ex);
+                return;
+            }
+
+            try
+            {
+                tcpHandler = new TcpListener(ipEndPoint);
+                tcpHandler.Start();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Fault to start tcpHandler: " + ex);
+                return;
+            }
+
+            var connectionHandler = Task.Run(() => ConnectionHandler());
+            connectionHandler.Wait(); 
+        }
+
+        internal void StopServer()
+        {
+            tcpHandler.Stop();
+            
+            foreach (var _client in connectedClients)
+            {
+                _client.CloseConnectionByServer();
+                connectedClients.Remove(_client);
+            }
+
+            Console.WriteLine("Server stopped");
         }
 
         internal async Task ConnectionHandler()
         {
-
+            Console.WriteLine("Server and connection hadler is started");
             try
             {
-                tcpHandler.Start();
-
                 while (true)
                 {
                     TcpClient tcpClient = await tcpHandler.AcceptTcpClientAsync();
