@@ -47,6 +47,12 @@ namespace ChatTCP
 
                 Task.Run(() => ReceiveMessageAsync(Reader));
 
+                // send userdata to server
+                await Writer.WriteLineAsync(localClient.Username());
+                await Writer.FlushAsync();
+                await Writer.WriteLineAsync(localClient.Userbio());
+                await Writer.FlushAsync();
+
                 SendMessageAsync(Writer);
             }
             catch (Exception ex)
@@ -123,10 +129,6 @@ namespace ChatTCP
 
         async Task SendMessageAsync(StreamWriter writer)
         {
-            await writer.WriteLineAsync(localClient.Username());
-            await writer.FlushAsync();
-            await writer.WriteLineAsync(localClient.Userbio());
-            await writer.FlushAsync();
             Console.WriteLine("Enter your message and press enter");
 
             while (true)
@@ -143,7 +145,6 @@ namespace ChatTCP
 
         async Task ReceiveMessageAsync(StreamReader reader)
         {
-
             while (true)
             {
                 try
@@ -209,6 +210,10 @@ namespace ChatTCP
     {
         private string username;
         private string userbio;
+
+        // TODO: rework chatting procedure
+        private bool isConnected;
+        private bool isOnline;
 
         public string Username()
         {

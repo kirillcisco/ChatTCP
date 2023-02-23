@@ -54,7 +54,7 @@ namespace ChatTCP
             
             foreach (var _client in connectedClients)
             {
-                _client.CloseConnectionByServer();
+                _client?.CloseConnectionByServer();
                 connectedClients.Remove(_client);
             }
 
@@ -101,9 +101,16 @@ namespace ChatTCP
             }
         }
 
-        internal bool CheckForConnection(int _id)
+        internal bool IsUsernameExist(string _username, int _userID) 
         {
-            return true;
+            foreach (var _client in connectedClients)
+            {
+                if (_client._username == _username && !(_client._ID == _userID))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         internal void ClientDiscconnect(int _id)

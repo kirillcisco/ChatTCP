@@ -42,6 +42,18 @@ namespace ChatTCP
                 try
                 {
                     _username = await _streamReader.ReadLineAsync();
+
+                    if (string.IsNullOrEmpty(_username))
+                    {
+                        _username = "Unknown_" + _ID;
+                    }
+
+                    if (_server.IsUsernameExist(_username, _ID))
+                    {
+                        _streamWriter.WriteLineAsync("(Server): Sorry, this username is already in use. Please change before connection");
+                        Console.WriteLine("Catched 2 nicknames");
+                    }
+
                     _userbio = await _streamReader.ReadLineAsync();
                 }
                 catch (Exception ex)
@@ -53,10 +65,6 @@ namespace ChatTCP
                     throw;
                 }
 
-                if (string.IsNullOrEmpty(_username))
-                {
-                    _username = "Unknown_" + _ID;
-                }
                 if (string.IsNullOrEmpty(_userbio))
                 {
                     _userbio = "We don't know anything about " + _username;
