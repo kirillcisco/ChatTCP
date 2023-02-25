@@ -19,12 +19,21 @@ namespace ChatTCP
             switch (_msgArgs[0])
             {
                 case "/exit":
-
-                    DisconnectByClient(_userID);
+                    _chatServer.ClientDiscconnect(_userID);
                     break;
                 case "/pm":
-                    
-                    PersonalMessage();
+                    if (_msgArgs.Length > 2)
+                    {
+                        //delete username from message string just walkaround
+                        int i = _mainMsg.IndexOf(" ") + 1;
+                        string str = _mainMsg.Substring(i);
+
+                        _chatServer.PersonalMessage(str, _msgArgsWithoutCommand[0], _userID);
+                    }
+                    else
+                    {
+                        _chatServer.ServerPersonalMessage("Command isnt complete!", _userID);
+                    }
                     break;
                 case "/bio":
                     break;
@@ -48,12 +57,6 @@ namespace ChatTCP
                         .ToArray();
                 return msg.Length > 0;
             } */
-        }
-
-        private void DisconnectByClient(int _id)
-        {
-            // _chatServer.ServerPersonalMessage("You are disconnected from the server", _id);   
-            _chatServer.ClientDiscconnect(_id);
         }
 
         private void PersonalMessage()

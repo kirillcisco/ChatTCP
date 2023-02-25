@@ -113,23 +113,24 @@ namespace ChatTCP
             return false;
         }
 
-        internal void ClientDiscconnect(int _id)
+        internal bool ClientDiscconnect(int _id)
         {
             // получаем по id закрытое подключение
             ClientEntity? client = connectedClients.FirstOrDefault(_client => _client._ID == _id);
+            
             if (client == null) 
             {
                 Console.WriteLine("User not found");
-                return;
+                return false;
             }
 
             Console.WriteLine("User " + client._ID + " disconnected");
-            // BroadcastMessage($"{client._username} leaves the chat", client._ID);
+            BroadcastMessage($"{client._username} leaves the chat", client._ID);
 
             // и удаляем его из списка подключений
             if (client != null) connectedClients.Remove(client);
             client?.CloseConnectionByServer();
-            
+            return true;
         }
 
         internal async Task BroadcastMessage(string _message, int _id)
@@ -156,8 +157,19 @@ namespace ChatTCP
 
             try
             {
-                await _destionation_client._streamWriter.WriteAsync("(From " + _source_client._username + "):" + _message);
-                await _destionation_client._streamWriter.FlushAsync();
+                if(_destionation_client != null && _source_client._ID == _userID)
+                {
+                    Console.WriteLine("_message: " + _message + "_username target: " + _username + "_userID: " + _userID);
+                    await _destionation_client._streamWriter.WriteLineAsync("(From " + _source_client._username + "): " + _message);
+                    await _destionation_client._streamWriter.FlushAsync();
+                    await _source_client._streamWriter.WriteLineAsync("(You) > (" + _destionation_client._username + "): " + _message);
+                    await _source_client._streamWriter.FlushAsync();
+                }
+                else
+                {
+                    await _source_client._streamWriter.WriteLineAsync("(Server): User not found :(");
+                    await _source_client._streamWriter.FlushAsync();
+                }
             }
             catch (Exception ex)
             {
@@ -170,15 +182,16 @@ namespace ChatTCP
         {
             var _client = connectedClients.Find(x => x._ID == _userID);
 
-                try
-                {
-                    await _client._streamWriter.WriteAsync("(Server): " + _message);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                    throw;
-                }
+            try
+            {
+                await _client._streamWriter.WriteLineAsync("(Server): " + _message);
+                await _client._streamWriter.FlushAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
         }
     }
 }
