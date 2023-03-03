@@ -7,14 +7,22 @@ using System.Threading.Tasks;
 
 namespace ChatTCP
 {
-    internal class ChatCommand
+    internal enum CommandID
     {
-        ChatTCP_Server _chatServer;
-        ClientEntity _chatClient;
+        ExitByClient = 0,
+        PersonalMessage = 1,
+        GetUserbio = 2,
+        GetWhoamiInfo = 3,
+        ChatRoll = 4,
+        ChatMeRoleplay = 5
+    }
 
-        internal ChatCommand(string[] _msgArgs, string[] _msgArgsWithoutCommand, string _mainMsg, int _userID, ChatTCP_Server ChatServer)
+    internal class CommandProcessor
+    {
+        ClientEntity _chatClient;
+        internal CommandProcessor(string[] _msgArgs, string[] _msgArgsWithoutCommand, string _mainMsg, int _userID, ChatTCP_Server _chatServer)
         {
-            _chatServer = ChatServer;
+            List<ClientEntity> _connectedClients = _chatServer.connectedClients;
 
             switch (_msgArgs[0])
             {
@@ -36,6 +44,14 @@ namespace ChatTCP
                     }
                     break;
                 case "/bio":
+                    if (_msgArgs.Length == 2)
+                    {
+                        _chatServer.GetUserbioByNickname(_msgArgsWithoutCommand[0], _userID);
+                    }
+                    else
+                    {
+                        _chatServer.ServerPersonalMessage("Command error!", _userID);
+                    }
                     break;
                 case "/whoami":
                     break;
@@ -44,10 +60,11 @@ namespace ChatTCP
                 case "/me":
                     break;
                 default:
-                    Console.WriteLine("Invalid command");
+                    _chatServer.ServerPersonalMessage("Command not found!", _userID);
                     break;
             }
 
+            
             // todo ?
             /* internal static bool CheckCommand(string _msg)
             {
@@ -58,33 +75,5 @@ namespace ChatTCP
                 return msg.Length > 0;
             } */
         }
-
-        private void PersonalMessage()
-        {
-
-        }
-
-        private void Userbio()
-        {
-
-        }
-
-        private void Whoami(int _id)
-        {
-
-        }
-
-        private void RollingNumber()
-        {
-
-        }
-
-        private void MeCommand()
-        {
-
-        }
-
-
     }
-
 }

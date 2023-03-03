@@ -162,7 +162,7 @@ namespace ChatTCP
             }
         }
 
-        void Print(string _message)
+        static void Print(string _message)
         {
             if (!OperatingSystem.IsWindows())    
             {

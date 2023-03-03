@@ -72,8 +72,6 @@ namespace ChatTCP
                     throw;
                 }
 
-                
-
                 // log connecting
                 var _timeStamp = new DateTimeOffset(DateTime.UtcNow);
                 Console.WriteLine($"User: ID: {_ID}, Nickname: {_username}, bio: {_userbio} [CONNECTED] [{_timeStamp}]");
@@ -98,19 +96,19 @@ namespace ChatTCP
                                 string[] _argsWithoutCommand = _args.Skip(1).ToArray();
                                 string _msgWithoutCommand = string.Join(" ", _argsWithoutCommand);
 
-                                ChatCommand chatCommand = new ChatCommand(_args, _argsWithoutCommand, _msgWithoutCommand, _ID, _server);
+                                CommandProcessor commandProcessor = new CommandProcessor(_args, _argsWithoutCommand, _msgWithoutCommand, _ID, _server);
                                 continue;
                             }
+
+                            _message = $"{_username}: {_message}";
+                            Console.WriteLine(_message);
+                            await _server.BroadcastMessage(_message, _ID);
                         }
                         else continue;
-
-                        _message = $"{_username}: {_message}";
-                        Console.WriteLine(_message);
-                        await _server.BroadcastMessage(_message, _ID);
                     }
                     catch
                     {
-                        _message = $"{_username} -  loss of signal";
+                        _message = $"{_username} -  downlink connection closed";
                         Console.WriteLine(_message);
                         break;
                     }

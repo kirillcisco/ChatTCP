@@ -15,7 +15,7 @@ namespace ChatTCP
     {
         IPEndPoint ipEndPoint;
         TcpListener tcpHandler;
-        List<ClientEntity> connectedClients = new List<ClientEntity>();
+        internal List<ClientEntity> connectedClients = new List<ClientEntity>();
 
         // IDBase[ID] = nickname, Unknown_RANDOMINDEX TODO
         List<string> IDBase = new List<string>();
@@ -150,8 +150,35 @@ namespace ChatTCP
             }
         }
 
+        internal async Task CommandProcessor(byte _commandID, string _message, string _username, int _userID)
+        {
+            
+
+
+
+            /* switch (_commandID)
+            {
+                case 1:
+                    break;
+                case 2:
+                    break;
+                case 3:
+                    break;
+                case 4:
+                    break;
+                case 5:
+                    break;
+                case 6:
+                    break;
+                case 0:
+                    break;
+            } */
+        }
         internal async Task PersonalMessage(string _message, string _username, int _userID)
         {
+            //var _destionation_client = FindClientObjectByUsername(_username);
+            //var _source_client = FindClientObjectByID(_userID);
+
             var _destionation_client = connectedClients.Find(x => x._username == _username);
             var _source_client = connectedClients.Find(x => x._ID == _userID);
 
@@ -159,7 +186,6 @@ namespace ChatTCP
             {
                 if(_destionation_client != null && _source_client._ID == _userID)
                 {
-                    Console.WriteLine("_message: " + _message + "_username target: " + _username + "_userID: " + _userID);
                     await _destionation_client._streamWriter.WriteLineAsync("(From " + _source_client._username + "): " + _message);
                     await _destionation_client._streamWriter.FlushAsync();
                     await _source_client._streamWriter.WriteLineAsync("(You) > (" + _destionation_client._username + "): " + _message);
@@ -168,6 +194,29 @@ namespace ChatTCP
                 else
                 {
                     await _source_client._streamWriter.WriteLineAsync("(Server): User not found :(");
+                    await _source_client._streamWriter.FlushAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+        }
+
+        internal async Task GetUserbioByNickname(string _username, int _userID)
+        {
+            //var _destionation_client = FindClientObjectByUsername(_username);
+            //var _source_client = FindClientObjectByID(_userID);
+            var _destionation_client = connectedClients.Find(x => x._username == _username);
+            var _source_client = connectedClients.Find(x => x._ID == _userID);
+
+            try
+            {
+                if (_destionation_client != null && _source_client._ID == _userID)
+                {
+                    Console.WriteLine("Sended bio: " + _destionation_client._userbio);
+                    await _source_client._streamWriter.WriteLineAsync("(" + _destionation_client._username + " BIO): " + _destionation_client._userbio);
                     await _source_client._streamWriter.FlushAsync();
                 }
             }
@@ -193,5 +242,38 @@ namespace ChatTCP
                 throw;
             }
         }
+
+        /* internal ClientEntity? FindClientObjectByUsername(string _username)
+        {
+            if (string.IsNullOrEmpty(_username))
+            {
+                try
+                {
+                    var _client = connectedClients.Find(x => x._username == _username);
+                    return _client;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    throw;
+                }
+            }
+            return null;
+        }
+
+        internal ClientEntity FindClientObjectByID(int _id)
+        {
+            try
+            {
+                var _client = connectedClients.Find(x => x._ID == _id);
+                return _client;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+        }
+        */
     }
 }
