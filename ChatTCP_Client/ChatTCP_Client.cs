@@ -69,6 +69,7 @@ namespace ChatTCP
 
         internal async void SendUserData(string username, string bio)
         {
+            // CHECK if EMPTY...
             msgSND_buffer = Encoding.Unicode.GetBytes(username);
             await networkStream.WriteAsync(msgSND_buffer);
             await networkStream.FlushAsync();
