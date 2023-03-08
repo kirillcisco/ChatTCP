@@ -150,30 +150,6 @@ namespace ChatTCP
             }
         }
 
-        internal async Task CommandProcessor(byte _commandID, string _message, string _username, int _userID)
-        {
-            
-
-
-
-            /* switch (_commandID)
-            {
-                case 1:
-                    break;
-                case 2:
-                    break;
-                case 3:
-                    break;
-                case 4:
-                    break;
-                case 5:
-                    break;
-                case 6:
-                    break;
-                case 0:
-                    break;
-            } */
-        }
         internal async Task PersonalMessage(string _message, string _username, int _userID)
         {
             //var _destionation_client = FindClientObjectByUsername(_username);
@@ -241,6 +217,27 @@ namespace ChatTCP
                 Console.WriteLine(ex.Message);
                 throw;
             }
+        }
+
+        internal async Task<string[]> GetUserInfo(int _userID)
+        {
+            var _client = connectedClients.Find(x => x._ID == _userID);
+
+            if(_client != null )
+            {
+                string[] _cInfo =
+                    {
+                    _client._username,
+                    _client._userbio
+                    };
+                return _cInfo;
+            }
+            else
+            {
+                string[] _cInfo = Array.Empty<string>();
+                return _cInfo;
+            }
+
         }
 
         /* internal ClientEntity? FindClientObjectByUsername(string _username)

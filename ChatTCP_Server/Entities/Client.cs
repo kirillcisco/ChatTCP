@@ -90,7 +90,7 @@ namespace ChatTCP
                             /* if (CheckCommand(_message))
                             {
                             } */
-                            if (Regex.IsMatch(_message, @"(/+)"))
+                            if (Regex.IsMatch(_message, @"(/+)")) // check chat string for starting with /....
                             {
                                 string[] _args = Regex.Split(_message, @"(?<!\s)\s|\s(?!\s)");
                                 string[] _argsWithoutCommand = _args.Skip(1).ToArray();
@@ -121,7 +121,7 @@ namespace ChatTCP
             finally
             {
                 Console.WriteLine("Client processor is closed, user ID: " + _ID);
-                // _server.ClientDiscconnect(_ID);
+                _server.ClientDiscconnect(_ID);
             }
 
         }

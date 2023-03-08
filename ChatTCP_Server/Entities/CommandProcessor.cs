@@ -54,6 +54,16 @@ namespace ChatTCP
                     }
                     break;
                 case "/whoami":
+                    if (_msgArgs.Length == 1)
+                    {
+                        string[] _cinfo = _chatServer.GetUserInfo(_userID).Result;
+
+                        _chatServer.ServerPersonalMessage(_cinfo[0] + " | " + _cinfo[1], _userID);
+                    }
+                    else
+                    {
+                        _chatServer.ServerPersonalMessage("Command error!", _userID);
+                    }
                     break;
                 case "/roll":
                     break;
