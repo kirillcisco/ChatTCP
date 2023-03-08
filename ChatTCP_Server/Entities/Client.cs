@@ -4,6 +4,8 @@ using System;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using System.IO;
+using System.Text;
 
 namespace ChatTCP
 {
@@ -13,11 +15,13 @@ namespace ChatTCP
 
         protected internal string _username { get; set; }
         protected internal string _userbio { get; set; }
-        protected internal StreamWriter _streamWriter { get; }
-        protected internal StreamReader _streamReader { get; }
 
         TcpClient _client;
         ChatTCP_Server _server;
+        internal NetworkStream _networkStream;
+
+        byte[] msgRCV_buffer = new byte[1024];
+        byte[] msgSND_buffer;
 
         internal ClientEntity(TcpClient tcpClient, ChatTCP_Server _connectedTCPServer, int _userChatID)
         {
@@ -25,10 +29,7 @@ namespace ChatTCP
 
             _client = tcpClient;
             _server = _connectedTCPServer;
-
-            var stream = _client.GetStream();
-            _streamReader = new StreamReader(stream);
-            _streamWriter = new StreamWriter(stream);
+            _networkStream = _client.GetStream();
         }
 
         public async Task ClientProcessor()
@@ -38,40 +39,8 @@ namespace ChatTCP
                 Console.WriteLine("User: " + _ID + " connected");
                 string _message;
 
-                // first get username & userbio
-                try
-                {
-                    _username = await _streamReader.ReadLineAsync();
-
-                    if (_server.IsUsernameExist(_username, _ID))
-                    {
-
-                        _streamWriter.WriteLineAsync("(Server): Sorry, this username is already in use. Please change before connection");
-                        Console.WriteLine("Catched 2 nicknames");
-                        _server.ClientDiscconnect(_ID);
-                    }
-                    else if (string.IsNullOrEmpty(_username))
-                    {
-                        _username = "Unknown_" + _ID;
-                    }
-
-                    _userbio = await _streamReader.ReadLineAsync();
-
-                    if (string.IsNullOrEmpty(_userbio))
-                    {
-                        _userbio = "We don't know anything about " + _username;
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.GetType().Name);
-                    Console.WriteLine("");
-                    Console.WriteLine(ex.Message);
-                    _server.ClientDiscconnect(_ID); // idk?
-                    throw;
-                }
-
+                await FirstSetUserInfo();
+                
                 // log connecting
                 var _timeStamp = new DateTimeOffset(DateTime.UtcNow);
                 Console.WriteLine($"User: ID: {_ID}, Nickname: {_username}, bio: {_userbio} [CONNECTED] [{_timeStamp}]");
@@ -80,7 +49,11 @@ namespace ChatTCP
                 {
                     try
                     {
-                        _message = await _streamReader.ReadLineAsync();
+                        // TODO Custom lenght of byte[]
+                        int rcv_buffer_lenght = await _networkStream.ReadAsync(msgRCV_buffer);
+                        _message = Encoding.Unicode.GetString(msgRCV_buffer);
+                        Array.Clear(msgRCV_buffer, 0, msgRCV_buffer.Length);
+                        _networkStream.FlushAsync();
 
                         // check for empty messages and commands
                         if (!(_message == null))
@@ -123,19 +96,63 @@ namespace ChatTCP
                 Console.WriteLine("Client processor is closed, user ID: " + _ID);
                 _server.ClientDiscconnect(_ID);
             }
-
         }
 
         internal void CloseConnectionByServer()
         {
-            _streamReader.Close();
-            _streamWriter.Close();
+            _networkStream.Close();
             _client.Close();
         }
 
         internal void DisplayLocalError(string _errorMsg)
         {
             Console.WriteLine("Error: " + _errorMsg);
+        }
+
+        // first get username & userbio
+        internal async Task FirstSetUserInfo()
+        {
+            int readLength;
+
+            try
+            {
+                // TODO Custom lenght of byte[]
+                readLength = await _networkStream.ReadAsync(msgRCV_buffer);
+                _username = Encoding.Unicode.GetString(msgRCV_buffer);
+                Array.Clear(msgRCV_buffer, 0, msgRCV_buffer.Length);
+                _networkStream.FlushAsync();
+
+                if (_server.IsUsernameExist(_username, _ID))
+                {
+                    byte[] send_buffer = Encoding.Unicode.GetBytes("(Server): Sorry, this username is already in use. Please change before connection");
+                    await _networkStream.WriteAsync(send_buffer);
+                    await _networkStream.FlushAsync();
+
+                    _server.ClientDiscconnect(_ID);
+                }
+                else if (string.IsNullOrEmpty(_username))
+                {
+                    _username = "Unknown_" + _ID;
+                }
+
+                readLength = await _networkStream.ReadAsync(msgRCV_buffer);
+                _userbio = Encoding.Unicode.GetString(msgRCV_buffer);
+                Array.Clear(msgRCV_buffer, 0, msgRCV_buffer.Length);
+                _networkStream.FlushAsync();
+
+                if (string.IsNullOrEmpty(_userbio))
+                {
+                    _userbio = "We don't know anything about " + _username;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.GetType().Name);
+                Console.WriteLine("");
+                Console.WriteLine(ex.Message);
+                _server.ClientDiscconnect(_ID); // idk?
+                throw;
+            }
         }
     }
 }

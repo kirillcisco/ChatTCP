@@ -2,6 +2,8 @@
 using System.Net;
 using System.IO;
 using ChatTCP;
+using System.Text;
+using System;
 
 ChatTCP_Client chatClient = new ChatTCP_Client();
 
@@ -13,6 +15,12 @@ namespace ChatTCP
     internal class ChatTCP_Client
     {
         LocalClient localClient = new LocalClient();
+        TcpClient tcpHandler = new TcpClient();
+        NetworkStream networkStream;
+
+        byte[] msgRCV_buffer = new byte[1024];
+        byte[] msgSND_buffer = new byte[1024];
+
         internal static List<MenuOption> menuOptions = new List<MenuOption>
             {
                 new MenuOption("Connect by IP to chat"),
@@ -34,26 +42,18 @@ namespace ChatTCP
 
         internal async void ConnectByIP(string _ip)
         {
-            TcpClient tcpHandler = new TcpClient();
-            StreamReader? Reader = null;
-            StreamWriter? Writer = null;
-
             try
             {
                 tcpHandler.Connect(_ip, port);
-                Reader = new StreamReader(tcpHandler.GetStream());
-                Writer = new StreamWriter(tcpHandler.GetStream());
-                if (Writer is null || Reader is null) return;
+                networkStream = tcpHandler.GetStream();
 
-                Task.Run(() => ReceiveMessageAsync(Reader));
+                if (networkStream is null) return;
 
-                // send userdata to server
-                await Writer.WriteLineAsync(localClient.Username());
-                await Writer.FlushAsync();
-                await Writer.WriteLineAsync(localClient.Userbio());
-                await Writer.FlushAsync();
+                Task.Run(() => ReceiveMessageAsync(networkStream));
 
-                SendMessageAsync(Writer);
+                SendUserData(localClient.Username(), localClient.Userbio());
+
+                SendMessageAsync(networkStream);
             }
             catch (Exception ex)
             {
@@ -62,10 +62,22 @@ namespace ChatTCP
             finally 
             {
                 Console.WriteLine("Connection closed");
-                Reader.Close();
-                Writer.Close();
+                networkStream.Close();
                 tcpHandler.Close(); 
             }
+        }
+
+        internal async void SendUserData(string username, string bio)
+        {
+            msgSND_buffer = Encoding.Unicode.GetBytes(username);
+            await networkStream.WriteAsync(msgSND_buffer);
+            await networkStream.FlushAsync();
+            Array.Clear(msgSND_buffer,0, msgSND_buffer.Length);
+
+            msgSND_buffer = Encoding.Unicode.GetBytes(bio);
+            await networkStream.WriteAsync(msgSND_buffer);
+            await networkStream.FlushAsync();
+            Array.Clear(msgSND_buffer, 0, msgSND_buffer.Length);
         }
 
         internal async void ReadKey() // REWORK this SHIT!!! TODO!
@@ -127,15 +139,20 @@ namespace ChatTCP
             Console.ReadKey();
         }
 
-        async Task SendMessageAsync(StreamWriter writer)
+        async Task SendMessageAsync(NetworkStream netStream)
         {
             Console.WriteLine("Enter your message and press enter");
 
             while (true)
             {
-                string? message = Console.ReadLine();
-                await writer.WriteLineAsync(message);
-                await writer.FlushAsync();
+                string? msg_string = Console.ReadLine();
+                byte[] send_buffer = Encoding.Unicode.GetBytes(msg_string);
+
+                await netStream.WriteAsync(send_buffer);
+                await netStream.FlushAsync();
+
+                //await writer.WriteLineAsync(message);
+                //await writer.FlushAsync();
 
                 // clear output line with msg to tag you msg by server (msg -> You: msg)
                 Console.SetCursorPosition(0, Console.CursorTop - 1);
@@ -143,17 +160,33 @@ namespace ChatTCP
             }
         }
 
-        async Task ReceiveMessageAsync(StreamReader reader)
+        async Task ReceiveMessageAsync(NetworkStream netStream)
         {
             while (true)
             {
                 try
                 {
+                    string message;
                     // check the null or empty incoming msg
-                    string? message = await reader.ReadLineAsync();
+                    /* string? message = await reader.ReadLineAsync();
                     
+                    if (string.IsNullOrEmpty(message)) continue; */
+
+                    // TODO
+                    //byte messageType = (byte)netStream.ReadByte();
+                    //byte[] messageLenght = new byte[sizeof(int)];
+
+                    byte[] rcv_buffer = new byte[1024];
+                    // TODO Custom lenght of byte[]
+                    int rcv_buffer_lenght = await netStream.ReadAsync(rcv_buffer);
+
+                    message = Encoding.Unicode.GetString(rcv_buffer);
+                    Array.Clear(rcv_buffer, 0, rcv_buffer.Length);
+
                     if (string.IsNullOrEmpty(message)) continue;
                     Print(message);
+
+                    rcv_buffer = new byte[1024];
                 }
                 catch
                 {
@@ -194,6 +227,8 @@ namespace ChatTCP
             Console.Write(new string(' ', Console.WindowWidth));
             Console.SetCursorPosition(0, currentLineCursor);
         }
+
+
     }
 
     internal class MenuOption
