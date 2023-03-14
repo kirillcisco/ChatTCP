@@ -4,6 +4,8 @@ using System.IO;
 using ChatTCP;
 using System.Text;
 using System;
+using System.Text.RegularExpressions;
+using System.Linq.Expressions;
 
 ChatTCP_Client chatClient = new ChatTCP_Client();
 
@@ -40,44 +42,48 @@ namespace ChatTCP
             ConsoleRender.WriteMenu(menuOptions, menuOptions[0]);
         }
 
-        internal async void ConnectByIP(string _ip)
+        internal void ConnectByIP(string _ip)
         {
             try
             {
                 tcpHandler.Connect(_ip, port);
                 networkStream = tcpHandler.GetStream();
 
-                if (networkStream is null) return;
-
                 Task.Run(() => ReceiveMessageAsync(networkStream));
-
                 SendUserData(localClient.Username(), localClient.Userbio());
-
                 SendMessageAsync(networkStream);
+
+                if (networkStream == null)
+                {
+                    return;
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Print(ex.Message);
+
+                // handle this PLEASE
+                return;
             }
             finally 
             {
                 Console.WriteLine("Connection closed");
                 networkStream.Close();
-                tcpHandler.Close(); 
+                tcpHandler.Close();
             }
+
+            
         }
 
         internal async void SendUserData(string username, string bio)
         {
             // CHECK if EMPTY...
-            msgSND_buffer = Encoding.Unicode.GetBytes(username);
+            msgSND_buffer = Encoding.ASCII.GetBytes(username);
             await networkStream.WriteAsync(msgSND_buffer);
-            await networkStream.FlushAsync();
             Array.Clear(msgSND_buffer,0, msgSND_buffer.Length);
 
-            msgSND_buffer = Encoding.Unicode.GetBytes(bio);
+            msgSND_buffer = Encoding.ASCII.GetBytes(bio);
             await networkStream.WriteAsync(msgSND_buffer);
-            await networkStream.FlushAsync();
             Array.Clear(msgSND_buffer, 0, msgSND_buffer.Length);
         }
 
@@ -108,10 +114,26 @@ namespace ChatTCP
                     switch (selectedMenu)
                     {
                         case 0:
+                            Regex validateIPv4Regex = new Regex("^(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
                             Console.Clear();
-
-                            Console.WriteLine("Enter server IP: ");
+                            Print("Enter server IPv4 or enter /menu to return:");
                             string? _reqIP = Console.ReadLine();
+
+                            // check for IPv4 format
+                            while (!validateIPv4Regex.IsMatch(_reqIP))
+                            {
+                                // read /menu command if user want to leave from entering ip
+                                if (_reqIP.IndexOf("/menu") >= 0)
+                                {
+                                    ConsoleRender.WriteMenu(menuOptions, menuOptions[0]);
+                                    break;
+                                }
+
+                                Console.Clear();
+                                Print("Please use IPv4 format or enter /menu to return:");
+                                _reqIP = Console.ReadLine();
+                            }
+
                             ConnectByIP(_reqIP);
                             break;
                         case 1:
@@ -147,13 +169,9 @@ namespace ChatTCP
             while (true)
             {
                 string? msg_string = Console.ReadLine();
-                byte[] send_buffer = Encoding.Unicode.GetBytes(msg_string);
+                byte[] send_buffer = Encoding.ASCII.GetBytes(msg_string);
 
                 await netStream.WriteAsync(send_buffer);
-                await netStream.FlushAsync();
-
-                //await writer.WriteLineAsync(message);
-                //await writer.FlushAsync();
 
                 // clear output line with msg to tag you msg by server (msg -> You: msg)
                 Console.SetCursorPosition(0, Console.CursorTop - 1);
@@ -181,7 +199,7 @@ namespace ChatTCP
                     // TODO Custom lenght of byte[]
                     int rcv_buffer_lenght = await netStream.ReadAsync(rcv_buffer);
 
-                    message = Encoding.Unicode.GetString(rcv_buffer);
+                    message = Encoding.ASCII.GetString(rcv_buffer);
                     Array.Clear(rcv_buffer, 0, rcv_buffer.Length);
 
                     if (string.IsNullOrEmpty(message)) continue;
@@ -228,8 +246,6 @@ namespace ChatTCP
             Console.Write(new string(' ', Console.WindowWidth));
             Console.SetCursorPosition(0, currentLineCursor);
         }
-
-
     }
 
     internal class MenuOption

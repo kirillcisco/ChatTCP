@@ -136,10 +136,9 @@ namespace ChatTCP
 
         private async Task SendStringToClient(ClientEntity _client, string string_data)
         {
-            byte[] buffer_send = Encoding.Unicode.GetBytes(string_data);
+            byte[] buffer_send = Encoding.ASCII.GetBytes(string_data);
 
             await _client._networkStream.WriteAsync(buffer_send);
-            await _client._networkStream.FlushAsync();
         }
 
         internal async Task BroadcastMessage(string _message, int _id)

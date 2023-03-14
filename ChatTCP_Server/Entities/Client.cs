@@ -51,9 +51,8 @@ namespace ChatTCP
                     {
                         // TODO Custom lenght of byte[]
                         int rcv_buffer_lenght = await _networkStream.ReadAsync(msgRCV_buffer);
-                        _message = Encoding.Unicode.GetString(msgRCV_buffer);
+                        _message = Encoding.ASCII.GetString(msgRCV_buffer);
                         Array.Clear(msgRCV_buffer, 0, msgRCV_buffer.Length);
-                        _networkStream.FlushAsync();
 
                         // check for empty messages and commands
                         if (!(_message == null))
@@ -118,15 +117,13 @@ namespace ChatTCP
             {
                 // TODO Custom lenght of byte[]
                 readLength = await _networkStream.ReadAsync(msgRCV_buffer);
-                _username = Encoding.Unicode.GetString(msgRCV_buffer);
+                _username = Encoding.ASCII.GetString(msgRCV_buffer);
                 Array.Clear(msgRCV_buffer, 0, msgRCV_buffer.Length);
-                _networkStream.FlushAsync();
 
                 if (_server.IsUsernameExist(_username, _ID))
                 {
-                    byte[] send_buffer = Encoding.Unicode.GetBytes("(Server): Sorry, this username is already in use. Please change before connection");
+                    byte[] send_buffer = Encoding.ASCII.GetBytes("(Server): Sorry, this username is already in use. Please change before connection");
                     await _networkStream.WriteAsync(send_buffer);
-                    await _networkStream.FlushAsync();
 
                     _server.ClientDiscconnect(_ID);
                 }
@@ -136,9 +133,8 @@ namespace ChatTCP
                 }
 
                 readLength = await _networkStream.ReadAsync(msgRCV_buffer);
-                _userbio = Encoding.Unicode.GetString(msgRCV_buffer);
+                _userbio = Encoding.ASCII.GetString(msgRCV_buffer);
                 Array.Clear(msgRCV_buffer, 0, msgRCV_buffer.Length);
-                _networkStream.FlushAsync();
 
                 if (string.IsNullOrEmpty(_userbio))
                 {
